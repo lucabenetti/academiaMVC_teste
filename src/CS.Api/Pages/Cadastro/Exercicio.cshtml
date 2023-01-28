@@ -1,0 +1,44 @@
+﻿@page
+@model CS.Api.Pages.Cadastro.ExercicioModel
+@{
+    Layout = "_LayoutPage";
+    ViewData["tituloFuncao"] = "Exercícios";
+}
+
+<div class="row">
+    <div class="col-xl-12">
+        <vc:grid options="@(Html.GridOptions(m => m.Exercicios)
+                                .AddColumn(c => c.Bound(m => m.Descricao).Title("Descrição"))
+                                .AddAction(a => a.Remover()).AoRemover("aoRemoverExercicio")
+                                .AddAction(a => a.Editar().AoClicar("aoEditarExercicio")))"></vc:grid>
+    </div>
+</div>
+
+<script defer>
+    EventDomContentLoaded(() => {
+        let exercicios = JSON.parse('@Html.Raw(ViewData["exercicios"])');
+        Grid_Exercicios.addRange(exercicios);
+
+        const botaoCadastrar = document.querySelector('.botao-cadastrar');
+        botaoCadastrar.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            window.location.href = '/Novo/ExercicioNovo';
+        });
+    });
+
+async function aoRemoverExercicio(row) {
+    const obj = {
+        "id": row.Id
+    }
+    const url = '@Url.Action("Remover", "Exercicio")';
+    const resposta = await postJSON(url, obj, "DELETE");
+    if(resposta.success){
+        new Modal().sucesso("O exercício foi excluído com sucesso").render();
+    }
+}
+
+function aoEditarExercicio(row) {
+    const url = `/Novo/ExercicioNovo?id=${row.Id}`;
+    window.location.href = url;
+}
+</script>

@@ -1,0 +1,63 @@
+﻿@page
+@model CS.Api.Pages.Cadastro.TreinoModel
+@{
+    Layout = "_LayoutPage";
+    ViewData["tituloFuncao"] = "Treinos";
+}
+
+<script type="text/template" id="TemplateDiaSemana">
+    ${obtenhaDescricaoDiaSemana(row)}
+</script>
+
+<div class="row">
+    <div class="col-xl-12">
+        <vc:grid options="@(Html.GridOptions(m => m.Treinos)
+                                .AddColumn(c => c.Bound(m => m.Aluno.Nome))
+                                .AddColumn(c => c.Template("#TemplateDiaSemana").Title("Dia da semana"))
+                                .AddAction(a => a.Remover()).AoRemover("aoRemoverTreino")
+                                .AddAction(a => a.Editar().AoClicar("aoClicarEditarTreino")))"></vc:grid>
+    </div>
+</div>
+
+<script defer>
+    EventDomContentLoaded(() => {
+        let treinos = JSON.parse('@Html.Raw(ViewData["treinos"])');
+        Grid_Treinos.addRange(treinos);
+
+        const botaoCadastrar = document.querySelector('.botao-cadastrar');
+        botaoCadastrar.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            window.location.href = '/Novo/TreinoNovo';
+        });
+    });
+
+    function obtenhaDescricaoDiaSemana(row) {
+        const diaSemana = {
+            1: "Segunda-feira",
+            2: "Terça-feira",
+            3: "Quarta-feira",
+            4: "Quinta-feira",
+            5: "Sexta-feira",
+            6: "Sábado",
+            0: "Domingo"
+        }
+        return diaSemana[row.DiaDaSemana];
+    }
+
+    function aoClicarEditarTreino(row) {
+        const url = `/Novo/TreinoNovo?id=${row.Id}`;
+        window.location.href = url;
+    }
+
+    async function aoRemoverTreino(row) {
+        const obj = {
+            "id": row.Id
+        }
+        const url = '@Url.Action("Remover", "Treino")';
+        const resposta = await postJSON(url, obj, "DELETE");
+        if(resposta.success){
+            new Modal().sucesso("O treino foi excluído com sucesso").render();
+        }
+    }
+
+</script>

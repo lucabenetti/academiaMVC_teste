@@ -1,0 +1,51 @@
+﻿@page
+@model CS.Api.Pages.Cadastro.AlunoModel
+@{
+    Layout = "_LayoutPage";
+    ViewData["tituloFuncao"] = "Alunos";
+}
+
+<script type="text/template" id="TemplateDataNascimento"> 
+    ${formateData(row.DataNascimento)}
+</script>
+
+<div class="row">
+    <div class="col-xl-12">
+        <vc:grid options="@(Html.GridOptions(m => m.Alunos)
+                                .AddColumn(c => c.Bound(m => m.Nome))
+                                .AddColumn(c => c.Bound(m => m.Cpf).Title("CPF"))
+                                .AddColumn(c => c.Bound(m => m.Email))
+                                .AddColumn(c => c.Template("#TemplateDataNascimento").Title("Data de nascimento"))
+                                .AddAction(a => a.Remover()).AoRemover("aoRemoverAluno")
+                                .AddAction(a => a.Editar().AoClicar("aoClicarEditarAluno")))"></vc:grid>
+    </div>
+</div>
+
+<script defer>
+    EventDomContentLoaded(() => {
+        let alunos = JSON.parse('@Html.Raw(ViewData["alunos"])');
+        Grid_Alunos.addRange(alunos);
+
+        const botaoCadastrar = document.querySelector('.botao-cadastrar');
+        botaoCadastrar.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            window.location.href = '/Novo/AlunoNovo';
+        });
+    });
+
+    async function aoRemoverAluno(row) {
+        const obj = {
+            "id": row.Id
+        }
+        const url = '@Url.Action("Remover", "Aluno")';
+        const resposta = await postJSON(url, obj, "DELETE");
+        if(resposta.success){
+            new Modal().sucesso("O aluno foi excluído com sucesso").render();
+        }
+    }
+
+    function aoClicarEditarAluno(row) {
+        const url = `/Novo/AlunoNovo?id=${row.Id}`;
+        window.location.href = url;
+    }
+</script>

@@ -1,0 +1,99 @@
+﻿@page
+@using Newtonsoft.Json
+@model CS.Api.Pages.Novo.ExercicioNovoModel
+@{
+    Layout = "_CadastroEntidade";
+    ViewData["tituloFuncao"] = "Cadastro de exercícios";
+    var exercicioEdicao = ViewData["exercicio"] != null ? JsonConvert.SerializeObject(ViewData["exercicio"]) : "''";
+}
+
+<div class="row">
+    <div class="col-xl-3">
+        <vc:drop-down options="@Html.DropDownOptions(m => m.TipoExercicio).RemovaDefaultMessage()"></vc:drop-down>
+    </div>
+    <div class="col-xl-3">
+        <vc:drop-down options="@Html.DropDownOptions(m => m.GrupoExercicio).RemovaDefaultMessage()"></vc:drop-down>
+    </div>
+    <div class="col-xl-3">
+        <label for="QuantidadeRepeticao" class="d-flex form-label">Quantidade de repetição</label>
+        <div class="form-group" data="">
+            <div class="input-group" data-target-input="nearest">
+                <input min="1" type="number" id="QuantidadeRepeticao" name="QuantidadeRepeticao" class="form-control" value="" autocomplete="off">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-6">
+        <label for="Descricao" class="d-flex form-label">Descrição do exercício</label>
+        <div class="form-group" data="">
+            <div class="input-group" data-target-input="nearest">
+                <textarea rows="5" type="text" id="Descricao" name="Descricao" class="form-control" value="" autocomplete="off"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <label for="Restricao" class="d-flex form-label">Restrição do exercício</label>
+        <div class="form-group" data="">
+            <div class="input-group" data-target-input="nearest">
+                <textarea rows="5" type="text" id="Restricao" name="Restricao" class="form-control" value="" autocomplete="off"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script defer>
+let exercicio;
+
+EventDomContentLoaded(() => {
+    const botaoCancelar = document.getElementById('cancelar');
+    botaoCancelar.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        new Modal().confirmacao("Tem certeza que deseja cancelar o cadastro ?", () => {
+            window.location.href = '/Cadastro/Exercicio';
+        }).render();
+    })
+    const botaoCadastrar = document.getElementById('gravar');
+    botaoCadastrar.addEventListener('click', gravarCadastro);
+    QuantidadeRepeticao.value = 1;
+
+    ajusteExercicioContextoEdicao();
+});
+
+async function gravarCadastro(ev) {
+    ev.preventDefault();
+
+    const url = '@Url.Action("Adicionar", "Exercicio")';
+    const urlEdicao = '@Url.Action("Atualizar", "Exercicio")';
+    const ehEdicao = exercicio != "";
+
+    const data = {
+        TipoExercicio: parseInt(TipoExercicio.value),
+        Descricao: Descricao.value,
+        Restricao: Restricao.value,
+        GrupoCorporal: parseInt(GrupoExercicio.value),
+        QuantidadeRepeticao: parseInt(QuantidadeRepeticao.value)
+    }
+    if (ehEdicao) {
+        data.Id = exercicio.Id;
+    }
+    const resposta = ehEdicao ? await postJSON(url, data, "PUT") : await postJSON(urlEdicao, data);
+    if (resposta && resposta.success) {
+        new Modal().sucesso(ehEdicao ? "Exercício editado com sucesso" : "Exercício cadastrado com sucesso").depoisDeOcultar(() => {
+            window.location.href = '/Cadastro/Exercicio';
+        }).render();
+    }
+}
+
+function ajusteExercicioContextoEdicao() {
+    exercicio = @Html.Raw(exercicioEdicao);
+    if (exercicio) {
+        TipoExercicio.value = exercicio.TipoExercicio;
+        GrupoExercicio.value = exercicio.GrupoCorporal;
+        QuantidadeRepeticao.value = exercicio.QuantidadeRepeticao;
+        Descricao.value = exercicio.Descricao;
+        Restricao.value = exercicio.Restricao;
+    }
+}
+</script>

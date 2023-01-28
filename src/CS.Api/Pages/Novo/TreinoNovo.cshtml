@@ -1,0 +1,93 @@
+﻿@page
+@using Newtonsoft.Json
+@model CS.Api.Pages.Novo.TreinoNovoModel
+@{
+    Layout = "_CadastroEntidade";
+    ViewData["tituloFuncao"] = "Cadastro de treino";
+    var exercicios = ViewData["exercicios"] != null ? JsonConvert.SerializeObject(ViewData["exercicios"]) : "''";
+    var treino = ViewData["treino"] != null ? JsonConvert.SerializeObject(ViewData["treino"]) : "''";
+}
+
+<div class="row">
+    <div class="col-xl-4">
+        <vc:pesquisa options="@Html.Pesquisa(m => m.Aluno).Action(Url.Action("Obter", "Aluno"), method: "GET")"></vc:pesquisa>
+        
+    </div>
+    <div class="col-xl-4">
+        <vc:drop-down options="@Html.DropDownOptions(m => m.DiaSemana).RemovaDefaultMessage()"></vc:drop-down>
+    </div>
+</div>
+
+<div class="separador-esquerda">Exercicios</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <vc:grid options="@Html.GridOptions(m => m.Exercicios).AddColumn(c => c.Bound(m => m.Descricao)).PermiteMultiplaSelecao()"></vc:grid>
+    </div>
+</div>
+
+<script defer>
+    let treino;
+
+    EventDomContentLoaded(() => {
+        let exercicios = @Html.Raw(exercicios);
+        if (exercicios) {
+            Grid_Exercicios.addRange(exercicios);
+        }
+
+        const botaoCadastrar = document.getElementById('gravar');
+        botaoCadastrar.addEventListener('click', gravarCadastro);
+
+        const botaoCancelar = document.getElementById('cancelar');
+        botaoCancelar.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            new Modal().confirmacao("Tem certeza que deseja cancelar o cadastro ?", () => {
+                window.location.href = '/Cadastro/Treino';
+            }).render();
+        });
+        ajusteTreinoContextoEdicao()
+    });
+
+    function ajusteTreinoContextoEdicao() {
+        treino = @Html.Raw(treino);
+        if (treino) {
+            debugger;
+            Pesquisa_Aluno.definaSelecionado(treino.Aluno);
+            DiaSemana.value = treino.DiaDaSemana;
+
+            treino.Exercicios.forEach(ex => {
+                const exercicioSelecionado = Grid_Exercicios.getData().find(exercicio => exercicio.Id == ex.Id)
+                if (exercicioSelecionado) {
+                    exercicioSelecionado.selected = true;
+                }
+            });
+            Grid_Exercicios.bind();
+        }
+    }
+
+    async function gravarCadastro(ev) {
+    ev.preventDefault();
+
+    const url = '@Url.Action("Adicionar", "Treino")';
+    const urlEdicao = '@Url.Action("Atualizar", "Treino")';
+    const ehEdicao = treino != "";
+
+    debugger;
+    const exerciciosSelecionados = Grid_Exercicios.obtenhaSelecionados().map(exercicio => exercicio.Id);
+    const data = {
+        AlunoId: Pesquisa_Aluno.obtenhaSelecionado()?.Id,
+        ExerciciosId: exerciciosSelecionados,
+        DiaDaSemana: parseInt(DiaSemana.value)
+    }
+    if (ehEdicao) {
+        data.Id = treino.Id;
+    }
+    const resposta = ehEdicao ? await postJSON(urlEdicao, data, "PUT") : await postJSON(url, data);
+    if (resposta && resposta.success) 
+    {
+        new Modal().sucesso(ehEdicao ? "Treino editado com sucesso" : "Treino cadastrado com sucesso").depoisDeOcultar(() => {
+            window.location.href = '/Cadastro/Treino';
+        }).render();
+    }
+}
+</script>
